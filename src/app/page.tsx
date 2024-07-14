@@ -1,49 +1,57 @@
+'use client';
+import { useState, useContext } from 'react';
+import { ConnectKitButton } from 'connectkit';
+import Wrapper from '@/components/layout/wrapper';
+import {Flex} from '@radix-ui/themes';
+import Navbar from '../components/layout/navbar';
+import NetworkCard from '../components/web3/networkCard';
+import ContractCard from '@/components/web3/contractCard';
+import {AppContext} from '@/providers/globalStateProvider';
+import Image from 'next/image'
 
-import type { Metadata } from "next";
-import { Inter as FontSans } from 'next/font/google';
-import "./globals.css";
-import { Web3Provider } from "@/providers/web3Provider";
-import { GlobalStateProvider } from '@/providers/globalStateProvider';
-import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/sonner";
-import { Theme } from '@radix-ui/themes';
-import '@radix-ui/themes/styles.css';
-
-const fontSans = FontSans({
-  subsets: ['latin'],
-  variable: '--font-sans',
-});
-
-export const metadata: Metadata = {
-  title: "Swapper App",
-  description: "Just swap it",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body className={cn(
-        'min-h-screen bg-background font-sans antialiased', fontSans.variable
-      )}>
-          <Web3Provider>
-            <GlobalStateProvider>
-              <Theme 
-                // appearance="dark"
-                accentColor="cyan"
-                grayColor="mauve"
-                radius="medium"
-                scaling="100%"
-              >
-                {children}
-              </Theme>
-            </GlobalStateProvider>
-          </Web3Provider>
-          <Toaster richColors/>
-      </body>
-    </html>
-  );
+export default function Home() {
+  // ----- Global State Variables -----
+  const {
+    chainId, 
+    chain,
+    userAddress,
+    ensName,
+    ensAvatar,
+    accountBalance,
+    isConnected
+  } = useContext(AppContext);
+  
+  // ---- Render login page
+  if (!isConnected) {
+    return (
+      <Wrapper>
+        <Flex direction="column" align={'center'} gap="3">
+          <Image src="/metamask.png" alt="hero" width={300} height={300} />
+          <ConnectKitButton />
+        </Flex>
+      </Wrapper>
+    )
+  // ---- Render the main page
+  }else{
+    return (
+      <>
+        <Navbar/>
+        <Wrapper>
+          <Flex wrap={'wrap'} gap="7">
+            <NetworkCard 
+              chainId={chainId} 
+              chainName={chain?.name} 
+              address={userAddress} 
+              ensName={ensName} 
+              ensAvatar={ensAvatar}
+              balance={accountBalance?.formatted}
+            />
+            <ContractCard 
+              userAddress={userAddress}
+            />
+          </Flex>          
+        </Wrapper>
+      </>
+    );
+  }
 }

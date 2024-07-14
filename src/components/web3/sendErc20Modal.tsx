@@ -33,8 +33,7 @@ export default function SendErc20Modal({ userAddress }: SendErc20ModalProps) {
     const [isPendingSend, setIsPendingSend] = useState(false);
     const { data: hash, isPending, writeContractAsync } = useWriteContract();
     const erc20ContractAddress =
-        process.env.NEXT_PUBLIC_ERC20_CONTRACT_ADDRESS ??
-        '0xd66cd7D7698706F8437427A3cAb537aBc12c8C88';
+        process.env.NEXT_PUBLIC_ERC20_CONTRACT_ADDRESS;
 
     const { data: erc20Balance, isSuccess } = useReadContract({
         abi: BootcampTokenABI,

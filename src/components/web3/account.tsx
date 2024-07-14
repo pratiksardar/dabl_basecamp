@@ -1,74 +1,75 @@
-'use client'
-import { useEffect } from 'react';
-import {Address,erc20Abi,parseEther} from 'viem';
-import { useChainId,useReadContract,useWaitForTransactionReceipt,useWriteContract} from 'wagmi';
-import { Button } from '../ui/button';
-import {POLYGON_EXCHANGE_PROXY} from '@/lib/constants';
+'use client';
 
-export default function ApproveOrReviewButton({userAddress, onClick, sellAmount,sellTokenAddress, disabled}: {
-        userAddress: Address | undefined;
-        onClick: (e: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
-        sellAmount: string;
-        sellTokenAddress: Address;
-        disabled?: boolean;
-    }) {
+import { useAccount, useBalance, useEnsAvatar, useEnsName } from 'wagmi';
+import { useEffect, useState } from 'react';
+import { mainnet } from 'viem/chains';
+import Image from 'next/image';
+import SendErc20Modal from '@/components/web3/sendErc20Modal';
+import SendEthModal from '@/components/web3/sendEthModal';
 
-    const chainId = useChainId() || 137;
-    const exchangeProxy = (chainId: number): Address => {
-        if (chainId === 137) {
-            return POLYGON_EXCHANGE_PROXY;
-        }
-        return POLYGON_EXCHANGE_PROXY;
-    };
-    
-    const { data: approvalTxHash, error: errorWriteContract,writeContractAsync} = useWriteContract();
-    const { isLoading: isConfirming, isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({hash: approvalTxHash});
-    const { data: allowance, refetch: refetchAllowance } = useReadContract({
-        address: sellTokenAddress,
-        abi: erc20Abi,
-        functionName: 'allowance',
-        args: [userAddress ?? '0x0', exchangeProxy(chainId)],
-        query: {
-          enabled: Boolean(userAddress),
-        },
-    });
+export function Account() {
+  const [isMounted, setIsMounted] = useState(false);
+  const {address: userAddress, address, chain, chainId } = useAccount();
+  const accountBalance = useBalance({
+    address,
+  });
+  const { data: ensName } = useEnsName({
+    address,
+    chainId: mainnet.id,
+  });
+  const { data: ensAvatar } = useEnsAvatar({
+    name: ensName!,
+    chainId: mainnet.id,
+  });
 
-    useEffect(() => {
-        if (isTxConfirmed) {
-          refetchAllowance();
-        }
-    }, [isTxConfirmed, refetchAllowance, allowance]);
-
-    async function onClickHandler(event: React.MouseEvent<HTMLElement>) {
-        event.preventDefault();
-        try {
-          await writeContractAsync({
-            abi: erc20Abi,
-            address: sellTokenAddress,
-            functionName: 'approve',
-            args: [exchangeProxy(chainId), parseEther(sellAmount)],
-          });
-        } catch (error) {
-          console.error(error);
-        }
+  useEffect(() => {
+    if (!isMounted) {
+      setIsMounted(true);
     }
+  }, [isMounted]);
 
-    if (errorWriteContract) {
-        return <div>Something went wrong: {errorWriteContract.message}</div>;
-    }else if (allowance === 0n || (allowance && allowance < parseEther(sellAmount))) {
-        return (
-          <>
-            <Button onClick={onClickHandler}>
-              {isConfirming ? 'Approving…' : 'Approve'}
-            </Button>
-          </>
-        );
-    }else return (
-        <Button
-          disabled={disabled}
-          onClick={async (event) => await onClick(event)}
-        >
-          {disabled ? 'Insufficient Balance' : 'Review Swap'}
-        </Button>
-    );
+  return (
+    <div className="flex flex-col items-center text-center gap-y-4">
+      {ensAvatar && ensName && isMounted && (
+        <div className="flex items-center gap-x-2">
+          <Image
+            alt="ENS Avatar"
+            src={ensAvatar}
+            className="h-16 w-16 rounded-full"
+            height={64}
+            width={64}
+          />
+          {ensName && <p className="text-2xl">{ensName}</p>}
+        </div>
+      )}
+      {address && isMounted && (
+        <>
+          <p className="text-lg">{address}</p>
+        </>
+      )}
+      <div className="flex flex-col gap-y-2">
+        {accountBalance && (
+          <p className="text-xl">
+            Balance: {accountBalance.data?.formatted} ETH
+          </p>
+        )}
+        {chain && chainId && isMounted && (
+          <p className="text-lg">
+            {chain.name}, chainId: {chainId}
+          </p>
+        )}
+      </div>
+      <div className="flex justify-center gap-x-8">
+        <div className="w-2/5">
+          <SendEthModal />
+        </div>
+        <div className="w-2/5">
+          <SendErc20Modal userAddress={userAddress} />
+        </div>
+        {/* <div className="w-2/5">
+          <SwapErc20Modal userAddress={userAddress} />
+        </div> */}
+      </div>
+    </div>
+  );
 }

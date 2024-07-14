@@ -32,7 +32,7 @@ export interface ContractCardProps {
 }
 
 const ContractCard: React.FC<ContractCardProps> = ({userAddress}) => {
-    const erc20ContractAddress = process.env.NEXT_PUBLIC_ERC20_CONTRACT_ADDRESS ??'0xd66cd7D7698706F8437427A3cAb537aBc12c8C88';
+    const erc20ContractAddress = process.env.NEXT_PUBLIC_ERC20_CONTRACT_ADDRESS;
     const [isPendingClaim, setIsPendingClaim] = useState(false);
     // ----------- Write to the contract to claim tokens ---------------------
     const { 

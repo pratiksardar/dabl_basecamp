@@ -18,7 +18,7 @@ export type MenuItemType = {
 
 const MENU_ITEMS: MenuItemType[] = [
   { displayText: 'devcamp', href: '/', isMobileOnly: false },
-  { displayText: 'repo', href: '/github', isMobileOnly: false },
+  { displayText: 'repo', href: 'https://github.com/pratiksardar', isMobileOnly: false },
   { displayText: 'docs', href: '/docs', isMobileOnly: false },
   { displayText: 'faq', href: '/faq', isMobileOnly: false },
 ];
